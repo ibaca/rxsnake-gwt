@@ -7,6 +7,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>Rx Snake GWT</title>
     <script type="text/javascript" src="rxsnake.nocache.js"></script>
+    <link href='https://fonts.googleapis.com/css?family=Roboto+Mono' rel='stylesheet' type='text/css'>
     <style>
         html, body {
             padding: 0;
@@ -25,7 +26,7 @@
             flex-direction: column;
             justify-content: center;
 
-            font-family: Lucida Console, Monaco5, monospace;
+            font-family: Roboto Mono, Lucida Console, Monaco5, monospace;
             font-size: 4vmin;
             line-height: 8vmin;
             color: #69F0D2;
@@ -110,6 +111,7 @@
             background: #69f0d230;
             box-shadow: 0 0 10px 1px #69F0D2, inset 0 0 10px 1px #69F0D2;
         }
+
         #controls > * + * {
             margin-left: 5px;
         }
@@ -163,8 +165,8 @@
 <div id="game"></div>
 <div>
     <div id="controls">
-        <a id="c-left">⥢</a>
-        <a id="c-right">⥤</a>
+        <a id="c-left">&leftarrow;</a>
+        <a id="c-right">&rightarrow;</a>
     </div>
 </div>
 <div>
