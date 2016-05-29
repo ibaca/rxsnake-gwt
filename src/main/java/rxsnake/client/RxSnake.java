@@ -21,7 +21,6 @@ import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.dom.client.HasTouchStartHandlers;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.user.client.ui.Anchor;
-import com.google.gwt.user.client.ui.FocusWidget;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
 import java.util.ArrayList;
@@ -134,7 +133,6 @@ public class RxSnake implements EntryPoint {
         }
         @Override public int hashCode() { return Objects.hash(x, y); }
         @Override public String toString() { return "{x=" + x + ", y=" + y + '}'; }
-
     }
 
     static class Input {
