@@ -8,12 +8,21 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static rx.Observable.combineLatest;
 import static rx.Observable.defer;
 import static rx.Observable.just;
+import static rx.Observable.merge;
+import static rxsnake.client.RxGwt.click;
 import static rxsnake.client.RxGwt.keyUp;
+import static rxsnake.client.RxGwt.touchStart;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NodeList;
+import com.google.gwt.event.dom.client.HasClickHandlers;
+import com.google.gwt.event.dom.client.HasTouchStartHandlers;
+import com.google.gwt.event.dom.client.KeyUpEvent;
+import com.google.gwt.user.client.ui.Anchor;
+import com.google.gwt.user.client.ui.FocusWidget;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
 import java.util.ArrayList;
 import java.util.Objects;
@@ -32,6 +41,10 @@ import rx.functions.Func1;
 public class RxSnake implements EntryPoint {
     static final Logger log = Logger.getLogger(RxSnake.class.getName());
     static final Document doc = Document.get();
+    static final Anchor cLeft = Anchor.wrap(doc.getElementById("c-left"));
+    static final Anchor cRight = Anchor.wrap(doc.getElementById("c-right"));
+    static final Label msg = Label.wrap(doc.getElementById("log"));
+    static final RootPanel root = RootPanel.get();
     static final XY size = new XY(20, 20);
 
     @Override public void onModuleLoad() {
@@ -59,7 +72,7 @@ public class RxSnake implements EntryPoint {
         XY startDirection = new XY(0, 1), startPosition = new XY(0, 0);
 
         @SuppressWarnings("SuspiciousNameCombination")
-        Observable<Func1<XY, XY>> actions = Observable.merge(
+        Observable<Func1<XY, XY>> actions = merge(
                 just(n -> n) /* initial action */,
                 input.left.map(n -> p -> new XY(p.y, -p.x)),
                 input.right.map(n -> p -> new XY(-p.y, p.x)));
@@ -125,12 +138,17 @@ public class RxSnake implements EntryPoint {
     }
 
     static class Input {
-        Observable<Integer> keys = keyUp(RootPanel.get()).map(e -> e.getNativeEvent().getKeyCode())
-                .compose(info("key"));
-        Observable<?> left = keys.filter(x -> x == 37);
-        Observable<?> right = keys.filter(x -> x == 39);
-        Observable<?> restart = keys.filter(x -> x == 82);
+        Observable<KeyUpEvent> keyUp = keyUp(root);
+        Observable<Integer> keyCode = keyUp.map(e -> e.getNativeEvent().getKeyCode()).compose(info("key"));
+        Observable<?> left = merge(keyCode.filter(x -> x == 37), tap(cLeft));
+        Observable<?> right = merge(keyCode.filter(x -> x == 39), tap(cRight));
+        Observable<?> restart = merge(keyCode.filter(x -> x == 82), tap(msg));
         Observable<?> tick = Observable.interval(200, MILLISECONDS).map(Long::intValue).compose(info("tick"));
+    }
+
+    static <T extends HasClickHandlers & HasTouchStartHandlers> Observable<?> tap(T a) {
+        return merge(click(a), touchStart(a)).throttleFirst(300, MILLISECONDS);
+        // fixes duplicate events received in mobiles --^
     }
 
     static class Game {
@@ -169,7 +187,7 @@ public class RxSnake implements EntryPoint {
 
         static void logRestart() { doc.getElementById("log").setInnerHTML("Press 'r' to restart"); }
 
-        static void logClear() { doc.getElementById("log").setInnerHTML("Press left/right to steer."); }
+        static void logClear() { doc.getElementById("log").setInnerHTML("Press left/right to steer"); }
 
         static void score(int score) { doc.getElementById("score").setInnerHTML("Score: " + score); }
     }

@@ -65,6 +65,10 @@
                 <configuration>
                     <moduleName>rxsnake.RxSnake</moduleName>
                     <skipModule>true</skipModule>
+                    <devmodeArgs>
+                        <arg>-bindAddress</arg>
+                        <arg>0.0.0.0</arg>
+                    </devmodeArgs>
                 </configuration>
             </plugin>
             <plugin>
