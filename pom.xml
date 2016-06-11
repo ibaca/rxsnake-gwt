@@ -9,7 +9,7 @@
     <version>1.0-SNAPSHOT</version>
     <packaging>gwt-app</packaging>
 
-    <url>https://github.com/ibaca/rxsnake-gwt</url>
+    <url>https://github.com/intendia-oss/rxsnake-gwt</url>
 
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
@@ -49,9 +49,9 @@
             <version>1.0.14-beta1</version>
         </dependency>
         <dependency>
-            <groupId>io.reactivex</groupId>
-            <artifactId>rxjava</artifactId>
-            <version>1.0.14</version>
+            <groupId>com.intendia.gwt</groupId>
+            <artifactId>rxgwt</artifactId>
+            <version>0.1-SNAPSHOT</version>
         </dependency>
     </dependencies>
 

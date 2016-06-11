@@ -1,5 +1,8 @@
 package rxsnake.client;
 
+import static com.intendia.rxgwt.client.RxEvents.click;
+import static com.intendia.rxgwt.client.RxEvents.keyUp;
+import static com.intendia.rxgwt.client.RxEvents.touchStart;
 import static java.lang.Math.floor;
 import static java.lang.Math.max;
 import static java.lang.Math.random;
@@ -9,9 +12,6 @@ import static rx.Observable.combineLatest;
 import static rx.Observable.defer;
 import static rx.Observable.just;
 import static rx.Observable.merge;
-import static rxsnake.client.RxGwt.click;
-import static rxsnake.client.RxGwt.keyUp;
-import static rxsnake.client.RxGwt.touchStart;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.dom.client.Document;
