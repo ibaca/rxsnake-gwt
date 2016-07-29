@@ -16,7 +16,7 @@
         <maven.compiler.target>1.8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <gwt.version>2.8.0-SNAPSHOT</gwt.version>
+        <gwt.version>2.8.0-rc1</gwt.version>
         <github.global.server>github</github.global.server>
     </properties>
 
@@ -52,6 +52,11 @@
             <groupId>com.intendia.gwt</groupId>
             <artifactId>rxgwt</artifactId>
             <version>0.1-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>jsr305</artifactId>
+            <version>3.0.0</version>
         </dependency>
     </dependencies>
 
@@ -90,6 +95,16 @@
     </build>
 
     <repositories>
+        <repository>
+            <id>sonatype-snapshots-repo</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
         <repository>
             <id>google-snapshots-repo</id>
             <url>https://oss.sonatype.org/content/repositories/google-snapshots</url>
