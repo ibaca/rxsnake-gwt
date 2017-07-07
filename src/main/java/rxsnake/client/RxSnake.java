@@ -1,8 +1,8 @@
 package rxsnake.client;
 
-import static com.intendia.rxgwt.client.RxEvents.keyUp;
-import static com.intendia.rxgwt.client.RxHandlers.click;
-import static com.intendia.rxgwt.client.RxHandlers.touchStart;
+import static com.intendia.rxgwt.user.RxEvents.keyUp;
+import static com.intendia.rxgwt.user.RxHandlers.click;
+import static com.intendia.rxgwt.user.RxHandlers.touchStart;
 import static java.lang.Math.floor;
 import static java.lang.Math.max;
 import static java.lang.Math.random;
