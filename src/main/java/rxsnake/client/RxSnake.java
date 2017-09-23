@@ -1,17 +1,16 @@
 package rxsnake.client;
 
-import static com.intendia.rxgwt.user.RxEvents.keyUp;
-import static com.intendia.rxgwt.user.RxHandlers.click;
-import static com.intendia.rxgwt.user.RxHandlers.touchStart;
+import static com.intendia.rxgwt2.user.RxEvents.keyUp;
+import static com.intendia.rxgwt2.user.RxHandlers.click;
+import static com.intendia.rxgwt2.user.RxHandlers.touchStart;
+import static io.reactivex.Observable.combineLatest;
+import static io.reactivex.Observable.just;
+import static io.reactivex.Observable.merge;
 import static java.lang.Math.floor;
 import static java.lang.Math.max;
 import static java.lang.Math.random;
 import static java.util.Arrays.copyOfRange;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static rx.Observable.combineLatest;
-import static rx.Observable.defer;
-import static rx.Observable.just;
-import static rx.Observable.merge;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.dom.client.Document;
@@ -23,15 +22,14 @@ import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
+import io.reactivex.Observable;
+import io.reactivex.ObservableTransformer;
+import io.reactivex.functions.Consumer;
+import io.reactivex.functions.Function;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import rx.Observable;
-import rx.Observable.Transformer;
-import rx.functions.Action1;
-import rx.functions.Func0;
-import rx.functions.Func1;
 
 /**
  * Original idea from http://philipnilsson.github.io/badness
@@ -48,67 +46,67 @@ public class RxSnake implements EntryPoint {
 
     @Override public void onModuleLoad() {
         Draw.game(size);
-
         Input inputs = new Input();
-        Func0<Observable<XY>> position = () -> position(inputs);
-        Func0<Observable<Game>> newGame = () -> game(position);
-
-        repeated(newGame, inputs.restart).subscribe(e -> {
-            Draw.snakeTail.call(e.snake);
-            Draw.snakeHead.call(copyOfRange(e.snake, max(0, e.snake.length - 1), e.snake.length));
-            Draw.apple.call(new XY[] { e.apple });
-            Draw.score(e.score);
-        });
+        Observable<Game> game = game(position(inputs))
+                .doOnSubscribe(s -> Draw.logClear())
+                .doOnNext(this::draw)
+                .doOnDispose(Draw::logRestart);
+        game.ignoreElements()
+                .andThen(inputs.restart.take(1))
+                .repeat().subscribe();
     }
 
-    static Observable<Game> repeated(Func0<Observable<Game>> game, Observable<?> restart) {
-        return Observable.concat(
-                game.call().doOnSubscribe(Draw::logClear).doOnUnsubscribe(Draw::logRestart),
-                defer(() -> restart.take(1).flatMap(n -> repeated(game, restart))));
+    private void draw(Game e) throws Exception {
+        Draw.snakeTail.accept(e.snake);
+        Draw.snakeHead.accept(copyOfRange(e.snake, max(0, e.snake.length - 1), e.snake.length));
+        Draw.apple.accept(new XY[] { e.apple });
+        Draw.score(e.score);
     }
 
     static Observable<XY> position(Input input) {
-        XY startDirection = new XY(0, 1), startPosition = new XY(0, 0);
+        return Observable.defer(() -> {
+            XY startDirection = new XY(0, 1), startPosition = new XY(0, 0);
 
-        @SuppressWarnings("SuspiciousNameCombination")
-        Observable<Func1<XY, XY>> actions = merge(
-                just(n -> n) /* initial action */,
-                input.left.map(n -> p -> new XY(p.y, -p.x)),
-                input.right.map(n -> p -> new XY(-p.y, p.x)));
+            @SuppressWarnings("SuspiciousNameCombination")
+            Observable<Function<XY, XY>> actions = merge(
+                    just(n -> n) /* initial action */,
+                    input.left.map(n -> p -> new XY(p.y, -p.x)),
+                    input.right.map(n -> p -> new XY(-p.y, p.x)));
 
-        Observable<XY> direction = actions.scan(startDirection, (x, f) -> f.call(x)).compose(info("direction"));
-        Observable<XY> directionTicks = input.tick.withLatestFrom(direction, (t, d) -> d);
-        Observable<XY> position = directionTicks.scan(startPosition, XY::add).compose(info("position"));
+            Observable<XY> direction = actions.scan(startDirection, (x, f) -> f.apply(x)).compose(info("direction"));
+            Observable<XY> directionTicks = input.tick.withLatestFrom(direction, (t, d) -> d);
+            Observable<XY> position = directionTicks.scan(startPosition, XY::add).compose(info("position"));
 
-        return position.share();
+            return position.share();
+        });
     }
 
-    static Observable<Game> game(Func0<Observable<XY>> position) {
-        Observable<XY> pos = position.call();
-        Observable<XY> apple = apple(pos).cache(1).compose(info("apple"));
+    static class PosLength {
+        XY pos;
+        int length;
+        PosLength(XY pos, int length) { this.pos = pos; this.length = length; }
+    }
 
-        class PosLength {
-            XY pos;
-            int length;
-            PosLength(XY pos, int length) { this.pos = pos; this.length = length; }
-        }
-        Observable<Integer> length = apple.map(n -> 1).scan(10 - 1, (x, y) -> x + y).compose(info("length"));
-        Observable<Integer> score = apple.map(n -> 1).scan(0 - 1, (x, y) -> x + y).compose(info("score"));
-        //noinspection Convert2MethodRef this method reference doesn't work --v
-        Observable<XY[]> snake = pos.withLatestFrom(length, (p, l) -> new PosLength(p, l))
-                .scan(new ArrayList<XY>(), (acc, n) -> {
-                    acc.add(n.pos); if (acc.size() > n.length) acc.remove(0); return acc;
-                })
-                .map(n -> n.toArray(new XY[n.size()]))
-                .compose(info("snake"))
-                .share();
+    static Observable<Game> game(Observable<XY> position) {
+        return Observable.defer(() -> {
+            Observable<XY> apple = apple(position).replay(1).refCount().compose(info("apple"));
+            Observable<Integer> length = apple.map(n -> 1).scan(10 - 1, (x, y) -> x + y).compose(info("length"));
+            Observable<Integer> score = apple.map(n -> 1).scan(0 - 1, (x, y) -> x + y).compose(info("score"));
+            Observable<XY[]> snake = position.withLatestFrom(length, PosLength::new)
+                    .scan(new ArrayList<XY>(), (acc, n) -> {
+                        acc.add(n.pos); if (acc.size() > n.length) acc.remove(0); return acc;
+                    })
+                    .map(n -> n.toArray(new XY[n.size()]))
+                    .compose(info("snake"))
+                    .share();
 
-        Observable<XY[]> dead = snake.filter(n -> {
-            for (int i = 0; i < n.length - 1; i++) if (n[i].equals(n[n.length - 1])) return true;
-            return false;
+            Observable<XY[]> dead = snake.filter(n -> {
+                for (int i = 0; i < n.length - 1; i++) if (n[i].equals(n[n.length - 1])) return true;
+                return false;
+            });
+
+            return combineLatest(snake, apple, score, Game::new).takeUntil(dead).compose(info("game")).share();
         });
-
-        return combineLatest(snake, apple, score, Game::new).takeUntil(dead).compose(info("game")).share();
     }
 
     static Observable<XY> apple(Observable<XY> position) {
@@ -171,7 +169,7 @@ public class RxSnake implements EntryPoint {
             game.setInnerHTML(html);
         }
 
-        static Action1<XY[]> fillCells(String className) {
+        static Consumer<XY[]> fillCells(String className) {
             Element game = doc.getElementById("game");
             return (ps) -> {
                 NodeList<Element> cells = querySelectorAll(game, "." + className);
@@ -179,9 +177,9 @@ public class RxSnake implements EntryPoint {
                 for (XY p : ps) game.getChild(p.y).getChild(p.x).<Element>cast().addClassName(className);
             };
         }
-        static Action1<XY[]> apple = fillCells("apple");
-        static Action1<XY[]> snakeHead = fillCells("snake-head");
-        static Action1<XY[]> snakeTail = fillCells("snake-tail");
+        static Consumer<XY[]> apple = fillCells("apple");
+        static Consumer<XY[]> snakeHead = fillCells("snake-head");
+        static Consumer<XY[]> snakeTail = fillCells("snake-tail");
 
         static void logRestart() { doc.getElementById("log").setInnerHTML("Press 'r' to restart"); }
 
@@ -190,7 +188,7 @@ public class RxSnake implements EntryPoint {
         static void score(int score) { doc.getElementById("score").setInnerHTML("Score: " + score); }
     }
 
-    private static <T> Transformer<T, T> info(String action) {
+    private static <T> ObservableTransformer<T, T> info(String action) {
         if (!log.isLoggable(Level.INFO)) return o -> o;
         else return o -> o.doOnNext(n -> log.info(action + ": " + Objects.toString(n)));
     }
