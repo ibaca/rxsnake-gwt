@@ -1,8 +1,8 @@
 package rxsnake.client;
 
-import static com.intendia.rxgwt2.user.RxEvents.keyUp;
-import static com.intendia.rxgwt2.user.RxHandlers.click;
-import static com.intendia.rxgwt2.user.RxHandlers.touchStart;
+import static com.intendia.rxgwt2.elemento.RxElemento.fromEvent;
+import static elemental2.dom.DomGlobal.console;
+import static elemental2.dom.DomGlobal.document;
 import static io.reactivex.Observable.combineLatest;
 import static io.reactivex.Observable.just;
 import static io.reactivex.Observable.merge;
@@ -11,37 +11,35 @@ import static java.lang.Math.max;
 import static java.lang.Math.random;
 import static java.util.Arrays.copyOfRange;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.jboss.gwt.elemento.core.EventType.click;
+import static org.jboss.gwt.elemento.core.EventType.keyup;
+import static org.jboss.gwt.elemento.core.EventType.touchstart;
+import static org.jboss.gwt.elemento.core.Key.ArrowLeft;
+import static org.jboss.gwt.elemento.core.Key.ArrowRight;
 
 import com.google.gwt.core.client.EntryPoint;
-import com.google.gwt.dom.client.Document;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.NodeList;
-import com.google.gwt.event.dom.client.HasClickHandlers;
-import com.google.gwt.event.dom.client.HasTouchStartHandlers;
-import com.google.gwt.event.dom.client.KeyUpEvent;
-import com.google.gwt.user.client.ui.Anchor;
-import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.RootPanel;
+import elemental2.dom.Console;
+import elemental2.dom.EventTarget;
+import elemental2.dom.HTMLAnchorElement;
+import elemental2.dom.HTMLElement;
+import elemental2.dom.KeyboardEvent;
 import io.reactivex.Observable;
 import io.reactivex.ObservableTransformer;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
 import java.util.ArrayList;
 import java.util.Objects;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import jsinterop.base.Js;
 
 /**
  * Original idea from http://philipnilsson.github.io/badness
  * Style from https://github.com/staltz/flux-challenge
  */
 public class RxSnake implements EntryPoint {
-    static final Logger log = Logger.getLogger(RxSnake.class.getName());
-    static final Document doc = Document.get();
-    static final Anchor cLeft = Anchor.wrap(doc.getElementById("c-left"));
-    static final Anchor cRight = Anchor.wrap(doc.getElementById("c-right"));
-    static final Label msg = Label.wrap(doc.getElementById("log"));
-    static final RootPanel root = RootPanel.get();
+    static final Console L = console;
+    static final HTMLAnchorElement cLeft = Js.cast(document.getElementById("c-left"));
+    static final HTMLAnchorElement cRight = Js.cast(document.getElementById("c-right"));
+    static final HTMLElement msg = Js.cast(document.getElementById("log"));
     static final XY size = new XY(20, 20);
 
     @Override public void onModuleLoad() {
@@ -134,16 +132,15 @@ public class RxSnake implements EntryPoint {
     }
 
     static class Input {
-        Observable<KeyUpEvent> keyUp = keyUp(root);
-        Observable<Integer> keyCode = keyUp.map(e -> e.getNativeEvent().getKeyCode()).compose(info("key"));
-        Observable<?> left = merge(keyCode.filter(x -> x == 37), tap(cLeft));
-        Observable<?> right = merge(keyCode.filter(x -> x == 39), tap(cRight));
-        Observable<?> restart = merge(keyCode.filter(x -> x == 82), tap(msg));
+        Observable<KeyboardEvent> keyUp = fromEvent(document, keyup).compose(info("key"));
+        Observable<?> left = merge(keyUp.filter(ArrowLeft::match), tap(cLeft));
+        Observable<?> right = merge(keyUp.filter(ArrowRight::match), tap(cRight));
+        Observable<?> restart = merge(keyUp.filter(x -> Objects.equals(x.key, "r")), tap(msg));
         Observable<?> tick = Observable.interval(200, MILLISECONDS).map(Long::intValue).compose(info("tick"));
     }
 
-    static <T extends HasClickHandlers & HasTouchStartHandlers> Observable<?> tap(T a) {
-        return merge(click(a), touchStart(a)).throttleFirst(300, MILLISECONDS);
+    static Observable<?> tap(EventTarget src) {
+        return merge(fromEvent(src, click), fromEvent(src, touchstart)).throttleFirst(300, MILLISECONDS);
         // fixes duplicate events received in mobiles --^
     }
 
@@ -159,45 +156,40 @@ public class RxSnake implements EntryPoint {
 
     static class Draw {
         static void game(XY size) {
-            Element game = doc.getElementById("game");
+            elemental2.dom.Element game = document.getElementById("game");
             String html = "";
             for (int i = 0; i < size.x; i++) {
                 html += "<div class=row>";
                 for (int j = 0; j < size.y; j++) html += "<span class=cell></span>";
                 html += "</div>";
             }
-            game.setInnerHTML(html);
+            game.innerHTML = html;
         }
 
         static Consumer<XY[]> fillCells(String className) {
-            Element game = doc.getElementById("game");
+            elemental2.dom.Element game = document.getElementById("game");
             return (ps) -> {
-                NodeList<Element> cells = querySelectorAll(game, "." + className);
-                for (int i = 0; i < cells.getLength(); i++) cells.getItem(i).removeClassName(className);
-                for (XY p : ps) game.getChild(p.y).getChild(p.x).<Element>cast().addClassName(className);
+                elemental2.dom.NodeList<elemental2.dom.Element> cells = game.querySelectorAll("." + className);
+                for (int i = 0; i < cells.getLength(); i++) {
+                    Js.<HTMLElement>cast(cells.item(i)).classList.remove(className);
+                }
+                for (XY p : ps) {
+                    Js.<HTMLElement>cast(game.childNodes.item(p.y).childNodes.item(p.x)).classList.add(className);
+                }
             };
         }
         static Consumer<XY[]> apple = fillCells("apple");
         static Consumer<XY[]> snakeHead = fillCells("snake-head");
         static Consumer<XY[]> snakeTail = fillCells("snake-tail");
 
-        static void logRestart() { doc.getElementById("log").setInnerHTML("Press 'r' to restart"); }
+        static void logRestart() { document.getElementById("log").innerHTML = "Press 'r' to restart"; }
 
-        static void logClear() { doc.getElementById("log").setInnerHTML("Press left/right to steer"); }
+        static void logClear() { document.getElementById("log").innerHTML = "Press left/right to steer"; }
 
-        static void score(int score) { doc.getElementById("score").setInnerHTML("Score: " + score); }
+        static void score(int score) { document.getElementById("score").innerHTML = "Score: " + score; }
     }
 
     private static <T> ObservableTransformer<T, T> info(String action) {
-        if (!log.isLoggable(Level.INFO)) return o -> o;
-        else return o -> o.doOnNext(n -> log.info(action + ": " + Objects.toString(n)));
+        return o -> o.doOnNext(n -> L.info(action + ": " + n));
     }
-
-    static native Element querySelector(Element root, String selector) /*-{
-        return root.querySelector(selector);
-    }-*/;
-
-    static native NodeList<Element> querySelectorAll(Element root, String selector) /*-{
-        return root.querySelectorAll(selector);
-    }-*/;
 }
