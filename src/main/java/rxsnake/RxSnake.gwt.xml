@@ -5,5 +5,6 @@
     <inherits name="com.intendia.rxgwt2.RxElemento"/>
     <inherits name="elemental2.dom.Dom"/>
     <entry-point class="rxsnake.client.RxSnake"/>
+    <add-linker name="direct_install"/>
     <collapse-all-properties/>
 </module>
