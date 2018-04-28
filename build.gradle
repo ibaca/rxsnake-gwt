@@ -6,24 +6,36 @@ version = '1.0-SNAPSHOT'
 
 description = """Snake game in GWT using reactive programming style powered by RxJava GWT."""
 
-sourceCompatibility = JavaVersion.VERSION_1_8
-targetCompatibility = JavaVersion.VERSION_1_8
+sourceCompatibility = JavaVersion.VERSION_1_10
+targetCompatibility = JavaVersion.VERSION_1_10
 tasks.withType(JavaCompile) { options.encoding = 'UTF-8' }
 
 repositories {
-    maven { url = 'https://oss.sonatype.org/content/repositories/snapshots' }
-    maven { url = 'https://oss.sonatype.org/content/repositories/google-snapshots' }
-    maven { url = 'https://raw.githubusercontent.com/intendia-oss/rxjava-gwt/mvn-repo/' }
     mavenCentral()
+    maven { url = 'https://oss.sonatype.org/content/repositories/snapshots/' }
+    maven { url = 'https://oss.sonatype.org/content/repositories/google-snapshots/' }
+    maven { url = 'https://raw.githubusercontent.com/intendia-oss/rxjava-gwt/mvn-repo/' }
 }
 
 dependencies {
-    compile group: 'com.google.gwt', name: 'gwt-user', version: '2.8.2-rx1'
-    compile group: 'com.google.gwt', name: 'gwt-dev', version: '2.8.2-rx1'
-    compile group: 'com.intendia.gwt', name: 'rxjava2-gwt', version: '2.1.2-beta1'
-    compile group: 'com.intendia.gwt.rxgwt2', name: 'rxgwt', version: '2.1'
-    compile group: 'org.jboss.gwt.elemento', name: 'elemento-core', version: '0.7.0'
-    compile group: 'com.google.code.findbugs', name: 'jsr305', version: '3.0.2'
+    compile 'com.google.gwt:gwt-user'
+    compile 'com.google.gwt:gwt-dev'
+    compile 'com.intendia.gwt:rxjava2-gwt:2.1.2-beta1'
+    compile 'com.intendia.gwt.rxgwt2:rxgwt:2.1'
+    compile 'org.jboss.gwt.elemento:elemento-core:0.7.0'
+    compile 'com.google.code.findbugs:jsr305:3.0.2'
+}
+
+configurations.all {
+    resolutionStrategy {
+        force 'com.google.gwt:gwt-user:HEAD-SNAPSHOT',
+                'com.google.gwt:gwt-dev:HEAD-SNAPSHOT',
+                'com.google.jsinterop:jsinterop-annotations:HEAD-SNAPSHOT',
+                'com.google.jsinterop:base:1.0.0-RC1',
+                'org.ow2.asm:asm:6.1.1',
+                'org.ow2.asm:asm-util:6.1.1',
+                'org.ow2.asm:asm-commons:6.1.1'
+    }
 }
 
 task gwtCompile(type: JavaExec) {
@@ -36,7 +48,7 @@ task gwtCompile(type: JavaExec) {
     doFirst { workingDir.mkdirs() }
     main = 'com.google.gwt.dev.Compiler'
     classpath sources
-    args = ['-draftCompile', '-failOnError', 'rxsnake.RxSnake']
+    args = ['-sourceLevel', '10', '-draftCompile', '-failOnError', 'rxsnake.RxSnake']
 }
 
 task gwtServe(type: JavaExec) {
@@ -46,5 +58,5 @@ task gwtServe(type: JavaExec) {
     doFirst { workingDir.mkdirs() }
     main = 'com.google.gwt.dev.DevMode'
     classpath files(sourceSets.main.java.srcDirs, sourceSets.main.resources.srcDirs, sourceSets.main.compileClasspath)
-    args = ['-failOnError', 'rxsnake.RxSnake']
+    args = ['-sourceLevel', '10', '-failOnError', 'rxsnake.RxSnake']
 }

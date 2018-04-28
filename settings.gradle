@@ -1,1 +1,2 @@
 rootProject.name = 'rxsnake-gwt'
+enableFeaturePreview('IMPROVED_POM_SUPPORT')
