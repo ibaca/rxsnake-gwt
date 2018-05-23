@@ -18,36 +18,25 @@ repositories {
 }
 
 dependencies {
-    compile 'com.google.gwt:gwt-user'
-    compile 'com.google.gwt:gwt-dev'
-    compile 'com.intendia.gwt:rxjava2-gwt:2.1.2-beta1'
-    compile 'com.intendia.gwt.rxgwt2:rxgwt:2.1'
-    compile 'org.jboss.gwt.elemento:elemento-core:0.7.0'
-    compile 'com.google.code.findbugs:jsr305:3.0.2'
+    implementation 'com.google.gwt:gwt-user:HEAD-SNAPSHOT'
+    implementation 'com.google.gwt:gwt-dev:HEAD-SNAPSHOT'
+    implementation 'com.intendia.gwt.rxgwt2:rxgwt:2.2'
+    implementation 'org.jboss.gwt.elemento:elemento-core:0.8.2-gwt2'
 }
 
-configurations.all {
-    resolutionStrategy {
-        force 'com.google.gwt:gwt-user:HEAD-SNAPSHOT',
-                'com.google.gwt:gwt-dev:HEAD-SNAPSHOT',
-                'com.google.jsinterop:jsinterop-annotations:HEAD-SNAPSHOT',
-                'com.google.jsinterop:base:1.0.0-RC1',
-                'org.ow2.asm:asm:6.1.1',
-                'org.ow2.asm:asm-util:6.1.1',
-                'org.ow2.asm:asm-commons:6.1.1'
-    }
+private gwtClasspath() {
+    files(sourceSets.main.java.srcDirs, sourceSets.main.resources.srcDirs, sourceSets.main.compileClasspath)
 }
 
 task gwtCompile(type: JavaExec) {
     dependsOn classes
     description = 'GWT compiler'
-    def sources = files(sourceSets.main.java.srcDirs, sourceSets.main.resources.srcDirs, sourceSets.main.compileClasspath)
-    inputs.files(sources)
+    inputs.files(gwtClasspath())
     outputs.dir("$project.buildDir/gwtCompile/war")
     workingDir "$project.buildDir/gwtCompile"
     doFirst { workingDir.mkdirs() }
     main = 'com.google.gwt.dev.Compiler'
-    classpath sources
+    classpath gwtClasspath()
     args = ['-sourceLevel', '10', '-draftCompile', '-failOnError', 'rxsnake.RxSnake']
 }
 
@@ -57,6 +46,6 @@ task gwtServe(type: JavaExec) {
     workingDir "$project.buildDir/gwtServe"
     doFirst { workingDir.mkdirs() }
     main = 'com.google.gwt.dev.DevMode'
-    classpath files(sourceSets.main.java.srcDirs, sourceSets.main.resources.srcDirs, sourceSets.main.compileClasspath)
+    classpath gwtClasspath()
     args = ['-sourceLevel', '10', '-failOnError', 'rxsnake.RxSnake']
 }
