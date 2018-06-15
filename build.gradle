@@ -1,5 +1,8 @@
-apply plugin: 'java'
-apply plugin: 'maven'
+plugins {
+    id 'java'
+    id 'maven'
+    id 'org.ajoberstar.git-publish' version '1.0.1'
+}
 
 group = 'com.intendia'
 version = '1.0-SNAPSHOT'
@@ -32,7 +35,7 @@ task gwtCompile(type: JavaExec) {
     dependsOn classes
     description = 'GWT compiler'
     inputs.files(gwtClasspath())
-    outputs.dir("$project.buildDir/gwtCompile/war")
+    outputs.dir("$project.buildDir/gwtCompile/war/rxsnake")
     workingDir "$project.buildDir/gwtCompile"
     doFirst { workingDir.mkdirs() }
     main = 'com.google.gwt.dev.Compiler'
@@ -48,4 +51,12 @@ task gwtServe(type: JavaExec) {
     main = 'com.google.gwt.dev.DevMode'
     classpath gwtClasspath()
     args = ['-sourceLevel', '10', '-failOnError', 'rxsnake.RxSnake']
+}
+
+gitPublish {
+    repoUri = 'git@github.com:ibaca/rxsnake-gwt.git'
+    branch = 'gh-pages'
+    contents {
+        from(gwtCompile)
+    }
 }
