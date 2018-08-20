@@ -18,12 +18,13 @@ repositories {
     maven { url = 'https://oss.sonatype.org/content/repositories/snapshots/' }
     maven { url = 'https://oss.sonatype.org/content/repositories/google-snapshots/' }
     maven { url = 'https://raw.githubusercontent.com/intendia-oss/rxjava-gwt/mvn-repo/' }
+    mavenLocal()
 }
 
 dependencies {
     implementation 'com.google.gwt:gwt-user:HEAD-SNAPSHOT'
     implementation 'com.google.gwt:gwt-dev:HEAD-SNAPSHOT'
-    implementation 'com.intendia.gwt.rxgwt2:rxgwt:2.2'
+    implementation 'com.intendia.gwt.rxgwt2:rxgwt:HEAD-SNAPSHOT'
     implementation 'org.jboss.gwt.elemento:elemento-core:0.8.2-gwt2'
 }
 
