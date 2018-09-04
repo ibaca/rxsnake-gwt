@@ -43,6 +43,7 @@ task gwtCompile(type: JavaExec) {
     classpath gwtClasspath()
     args = ['-sourceLevel', '10', '-draftCompile', '-failOnError', 'rxsnake.RxSnake']
 }
+assemble.dependsOn(gwtCompile)
 
 task gwtServe(type: JavaExec) {
     dependsOn classes
