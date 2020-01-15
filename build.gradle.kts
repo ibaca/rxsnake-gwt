@@ -1,6 +1,5 @@
 plugins {
     java
-    maven
     id("org.ajoberstar.git-publish") version "3.0.0-rc.1"
 }
 
@@ -31,7 +30,7 @@ fun gwtClasspath() = sourceSets.main.get().run {
     files(java.srcDirs, resources.srcDirs, compileClasspath)
 }
 
-tasks.register<JavaExec>("gwtCompile") {
+val gwtCompile = tasks.register<JavaExec>("gwtCompile") {
     dependsOn(tasks.classes)
     description = "GWT compiler"
     inputs.files(gwtClasspath())
@@ -44,7 +43,7 @@ tasks.register<JavaExec>("gwtCompile") {
 }
 
 tasks.assemble {
-    dependsOn("gwtCompile")
+    dependsOn(gwtCompile)
 }
 
 tasks.register<JavaExec>("gwtServe") {
@@ -61,6 +60,6 @@ gitPublish {
     repoUri.set("git@github.com:ibaca/rxsnake-gwt.git")
     branch.set("gh-pages")
     contents {
-        from("gwtCompile")
+        from(gwtCompile)
     }
 }
